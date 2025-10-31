@@ -1,0 +1,213 @@
+const express = require('express');
+const router = express.Router();
+const { authenticate, isAdmin } = require('../middleware/auth');
+const db = require('../config/database');
+
+// Get all events
+router.get('/', async (req, res) => {
+  try {
+    const [events] = await db.query(`
+      SELECT e.*, u.username as organizer_username, u.email as organizer_email
+      FROM events e
+      LEFT JOIN users u ON e.organizer_id = u.id
+      ORDER BY e.event_date DESC
+    `);
+    
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Server error fetching events' });
+  }
+});
+
+// Get user's own events - MUST be before /:id route!
+router.get('/my-events', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    console.log('Fetching events for userId:', userId);
+    
+    const [events] = await db.query(`
+      SELECT e.*, u.username as organizer_username, u.email as organizer_email
+      FROM events e
+      LEFT JOIN users u ON e.organizer_id = u.id
+      WHERE e.organizer_id = ?
+      ORDER BY e.event_date DESC
+    `, [userId]);
+    
+    console.log('Found events:', events.length);
+    res.json(events);
+  } catch (error) {
+    console.error('Error fetching user events:', error);
+    res.status(500).json({ error: 'Server error fetching your events' });
+  }
+});
+
+// Get single event by ID - MUST be last!
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [events] = await db.query(`
+      SELECT e.*, u.username as organizer_username, u.email as organizer_email, u.full_name as organizer_full_name
+      FROM events e
+      LEFT JOIN users u ON e.organizer_id = u.id
+      WHERE e.id = ?
+    `, [id]);
+    
+    if (events.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    res.json(events[0]);
+  } catch (error) {
+    console.error('Error fetching event:', error);
+    res.status(500).json({ error: 'Server error fetching event' });
+  }
+});
+
+// Create new event (Admin only)
+router.post('/', authenticate, async (req, res) => {
+  try {
+    console.log('Create event request received');
+    console.log('User:', req.user);
+    console.log('Request body:', req.body);
+    
+    const { title, description, eventDate, location, category, price, capacity, image_url, organizer_name } = req.body;
+    const organizerId = req.user.userId;
+    const role = req.user.role;
+
+    // Check if user is admin or organizer
+    if (role !== 'admin' && role !== 'organizer') {
+      return res.status(403).json({ error: 'Only admins and organizers can create events' });
+    }
+
+    // Validate input
+    if (!title || !description || !eventDate || !location || !category) {
+      return res.status(400).json({ error: 'Title, description, event date, location, and category are required' });
+    }
+
+    console.log('Creating event with data:', {
+      title, description, eventDate, location, category, 
+      price: price || 0, capacity: capacity || 100, 
+      organizerId, organizer_name
+    });
+    console.log('Image URL length:', image_url ? image_url.length : 0);
+    if (image_url && image_url.length > 100) {
+      console.log('Image URL preview (first 100 chars):', image_url.substring(0, 100));
+    }
+
+    // Create event
+    const [result] = await db.query(`
+      INSERT INTO events (title, description, event_date, location, category, price, capacity, organizer_id, image_url, organizer_name, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())
+    `, [title, description, eventDate, location, category, price || 0, capacity || 100, organizerId, image_url || null, organizer_name]);
+
+    console.log('Event created successfully:', result.insertId);
+
+    res.status(201).json({ 
+      message: 'Event created successfully',
+      eventId: result.insertId
+    });
+  } catch (error) {
+    console.error('Error creating event:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Server error creating event',
+      details: error.message 
+    });
+  }
+});
+
+// Update event (Organizer/Admin only)
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, eventDate, location, category, price, capacity, status, image_url, organizer_name } = req.body;
+    const userId = req.user.userId;
+    const role = req.user.role;
+
+    // Check if event exists and user has permission
+    const [events] = await db.query('SELECT organizer_id FROM events WHERE id = ?', [id]);
+    
+    if (events.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    if (events[0].organizer_id !== userId && role !== 'admin') {
+      return res.status(403).json({ error: 'You do not have permission to update this event' });
+    }
+
+    // Update event
+    await db.query(`
+      UPDATE events
+      SET title = ?, description = ?, event_date = ?, location = ?, category = ?, price = ?, capacity = ?, status = ?, image_url = ?, organizer_name = ?, updated_at = NOW()
+      WHERE id = ?
+    `, [title, description, eventDate, location, category, price, capacity, status, image_url || null, organizer_name, id]);
+
+    res.json({ message: 'Event updated successfully' });
+  } catch (error) {
+    console.error('Error updating event:', error);
+    res.status(500).json({ error: 'Server error updating event' });
+  }
+});
+
+// Close/Complete event (Organizer/Admin only)
+router.put('/:id/close', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const role = req.user.role;
+
+    // Check if event exists and user has permission
+    const [events] = await db.query('SELECT organizer_id FROM events WHERE id = ?', [id]);
+    
+    if (events.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    if (events[0].organizer_id !== userId && role !== 'admin') {
+      return res.status(403).json({ error: 'You do not have permission to close this event' });
+    }
+
+    // Close event (set status to completed)
+    await db.query('UPDATE events SET status = "completed", updated_at = NOW() WHERE id = ?', [id]);
+
+    res.json({ message: 'Event closed successfully' });
+  } catch (error) {
+    console.error('Error closing event:', error);
+    res.status(500).json({ error: 'Server error closing event' });
+  }
+});
+
+// Delete event (Organizer/Admin only)
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const role = req.user.role;
+
+    // Check if event exists and user has permission
+    const [events] = await db.query('SELECT organizer_id FROM events WHERE id = ?', [id]);
+    
+    if (events.length === 0) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Only organizer or admin can delete
+    if (events[0].organizer_id !== userId && role !== 'admin') {
+      return res.status(403).json({ error: 'You do not have permission to delete this event' });
+    }
+
+    // Delete event
+    await db.query('DELETE FROM events WHERE id = ?', [id]);
+
+    res.json({ message: 'Event deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting event:', error);
+    res.status(500).json({ error: 'Server error deleting event' });
+  }
+});
+
+module.exports = router;
+
