@@ -4,8 +4,8 @@ const path = require('path');
 require('dotenv').config();
 
 async function fullEliteSetup() {
-    console.log('💎 STARTING ABSOLUTE MASTER ELITE SETUP...');
-    console.log('This will synchronize your database with ALL premium features.');
+    console.log('💎 STARTING REPAIR: ABSOLUTE MASTER ELITE SETUP...');
+    console.log('Synching your system with all premium "Elite" feature data...');
 
     const connection = await mysql.createConnection({
         host: process.env.DB_HOST || 'localhost',
@@ -15,26 +15,27 @@ async function fullEliteSetup() {
     });
 
     try {
-        // 1. Core Schema Updates (Missing from setup.sql)
-        console.log('🛠️  Syncing Core Schema...');
-        
-        // Events table
-        await connection.query(`
-            ALTER TABLE events 
-            ADD COLUMN IF NOT EXISTS has_seating BOOLEAN DEFAULT FALSE,
-            ADD COLUMN IF NOT EXISTS seating_config JSON DEFAULT NULL,
-            ADD COLUMN IF NOT EXISTS organizer_name VARCHAR(100) DEFAULT NULL
-        `).catch(() => {});
+        console.log('📦 Running Safety Checks & Schema Updates...');
 
-        // Bookings table
-        await connection.query(`
-            ALTER TABLE bookings 
-            ADD COLUMN IF NOT EXISTS selected_seats JSON DEFAULT NULL,
-            ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Card',
-            ADD COLUMN IF NOT EXISTS qr_token VARCHAR(255) DEFAULT NULL
-        `).catch(() => {});
+        // Helper to add column if missing (Works on all MySQL versions)
+        const ensureColumn = async (table, col, definition) => {
+            const [cols] = await connection.query(`SHOW COLUMNS FROM ${table} LIKE ?`, [col]);
+            if (cols.length === 0) {
+                await connection.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${definition}`);
+                console.log(`   + Added missing column ${table}.${col}`);
+            }
+        };
 
-        // Coupons table - Create from scratch if missing
+        // 1. Core Schema Sync
+        await ensureColumn('events', 'has_seating', 'BOOLEAN DEFAULT FALSE');
+        await ensureColumn('events', 'seating_config', 'JSON DEFAULT NULL');
+        await ensureColumn('events', 'organizer_name', 'VARCHAR(100) DEFAULT NULL');
+
+        await ensureColumn('bookings', 'selected_seats', 'JSON DEFAULT NULL');
+        await ensureColumn('bookings', 'payment_method', 'VARCHAR(50) DEFAULT "Card"');
+        await ensureColumn('bookings', 'qr_token', 'VARCHAR(255) DEFAULT NULL');
+
+        // 2. Coupons Table - Handle specifically (Create or Rename)
         await connection.query(`
             CREATE TABLE IF NOT EXISTS coupons (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,18 +50,20 @@ async function fullEliteSetup() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        console.log('   - Coupons table verified/created.');
 
-        // Update Coupons table columns (compatibility check for older existing tables)
-        await connection.query(`
-            ALTER TABLE coupons 
-            ADD COLUMN IF NOT EXISTS discount_type ENUM('percentage', 'flat') DEFAULT 'percentage',
-            ADD COLUMN IF NOT EXISTS min_purchase_amount DECIMAL(10, 2) DEFAULT 0.00
-        `).catch(() => {});
+        // Check for old rename if necessary
+        const [oldCol] = await connection.query(`SHOW COLUMNS FROM coupons LIKE 'discount_percent'`);
+        const [newCol] = await connection.query(`SHOW COLUMNS FROM coupons LIKE 'discount_value'`);
+        if (oldCol.length > 0 && newCol.length === 0) {
+            await connection.query(`ALTER TABLE coupons CHANGE COLUMN discount_percent discount_value INT NOT NULL`);
+            console.log('   + Renamed legacy column discount_percent to discount_value');
+        } else {
+            await ensureColumn('coupons', 'discount_value', 'INT NOT NULL');
+        }
+        await ensureColumn('coupons', 'discount_type', "ENUM('percentage', 'flat') DEFAULT 'percentage'");
+        await ensureColumn('coupons', 'min_purchase_amount', 'DECIMAL(10, 2) DEFAULT 0.00');
 
-        // 2. New Elite Tables
-        console.log('📂 Creating Elite Tables...');
-        
+        // 3. New Elite Tables
         await connection.query(`
             CREATE TABLE IF NOT EXISTS waitlist (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -85,8 +88,8 @@ async function fullEliteSetup() {
             )
         `);
 
-        // 3. Injecting Professional Events & Coupons
-        console.log('🌟 Injecting Professional Elite Data...');
+        // 4. Injecting Professional Data
+        console.log('🌟 Injecting Professional Data (Events & Coupons)...');
         
         // Seed Coupons
         const couponsData = [
@@ -132,11 +135,10 @@ async function fullEliteSetup() {
                     "Elite Corp"
                 )
             `, [seatingConfig]);
-            console.log('✅ Added "Corporate Leadership Retreat" with full seating map.');
+            console.log('✅ Added Elite Event with seating map.');
         }
 
-        console.log('\n✅ ALL ELITE FEATURES SYNCHRONIZED!');
-        console.log('You can now see seats, use coupons, and view financial exports.');
+        console.log('\n✅ ALL ELITE FEATURES REPAIRED & READY!');
 
     } catch (error) {
         console.error('❌ SETUP FAILED:', error.message);

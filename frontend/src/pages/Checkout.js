@@ -77,23 +77,30 @@ const Checkout = () => {
         }
     };
 
-    const calculateSavings = () => {
+    const calculateSavings = useCallback(() => {
         if (!booking || !couponData) return 0;
-        const base = parseFloat(booking.total_cost);
-        const val = parseFloat(couponData.discount_value);
+        const base = parseFloat(booking.total_cost || 0);
+        const val = parseFloat(couponData.discount_value || 0);
+        let savings = 0;
+        
         if (couponData.discount_type === 'percentage') {
-            return base * (val / 100);
+            savings = base * (val / 100);
         } else {
-            return Math.min(base, val);
+            savings = Math.min(base, val);
         }
-    };
+        
+        console.log(`Calculated savings: ₹${savings} (Base: ${base}, Val: ${val}, Type: ${couponData.discount_type})`);
+        return savings;
+    }, [booking, couponData]);
 
-    const calculateTotal = () => {
-        if (!booking) return 0;
-        const base = parseFloat(booking.total_cost);
+    const calculateTotal = useCallback(() => {
+        if (!booking) return "0.00";
+        const base = parseFloat(booking.total_cost || 0);
         const savings = calculateSavings();
-        return (base - savings).toFixed(2);
-    };
+        const final = (base - savings).toFixed(2);
+        console.log(`Final total to display: ₹${final}`);
+        return final;
+    }, [booking, calculateSavings]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
