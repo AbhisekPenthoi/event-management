@@ -30,6 +30,7 @@ async function fullEliteSetup() {
         await ensureColumn('events', 'has_seating', 'BOOLEAN DEFAULT FALSE');
         await ensureColumn('events', 'seating_config', 'JSON DEFAULT NULL');
         await ensureColumn('events', 'organizer_name', 'VARCHAR(100) DEFAULT NULL');
+        await ensureColumn('events', 'expenses', 'DECIMAL(10, 2) DEFAULT 0.00');
 
         await ensureColumn('bookings', 'selected_seats', 'JSON DEFAULT NULL');
         await ensureColumn('bookings', 'payment_method', 'VARCHAR(50) DEFAULT "Card"');
