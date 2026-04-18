@@ -80,10 +80,11 @@ const Checkout = () => {
     const calculateSavings = () => {
         if (!booking || !couponData) return 0;
         const base = parseFloat(booking.total_cost);
+        const val = parseFloat(couponData.discount_value);
         if (couponData.discount_type === 'percentage') {
-            return base * (couponData.discount_value / 100);
+            return base * (val / 100);
         } else {
-            return Math.min(base, couponData.discount_value);
+            return Math.min(base, val);
         }
     };
 
@@ -158,12 +159,14 @@ const Checkout = () => {
                                 {booking.selected_seats && (
                                     (() => {
                                         const config = typeof booking.seating_config === 'string' ? JSON.parse(booking.seating_config) : booking.seating_config;
-                                        const selected = typeof booking.selected_seats === 'string' ? JSON.parse(booking.selected_seats) : booking.selected_seats;
+                                        const seats = typeof booking.selected_seats === 'string' ? JSON.parse(booking.selected_seats) : booking.selected_seats;
                                         let vipCount = 0;
-                                        selected.forEach(s => {
-                                            const r = parseInt(s.split('-')[0]);
-                                            if (config.vip_rows?.includes(r)) vipCount++;
-                                        });
+                                        if (Array.isArray(seats)) {
+                                            seats.forEach(s => {
+                                                const r = parseInt(s.split('-')[0]);
+                                                if (config?.vip_rows?.includes(r)) vipCount++;
+                                            });
+                                        }
                                         
                                         if (vipCount > 0) {
                                             const multiplier = parseFloat(config.vip_price_multiplier || 1.5);

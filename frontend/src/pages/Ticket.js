@@ -110,10 +110,16 @@ const Ticket = () => {
                   {booking.selected_seats && (
                     <div className="info-row seat-info-row">
                       <span className="label">💺 Seats:</span>
-                      <span className="seat-numbers">{booking.selected_seats.map(s => {
-                        const [r, c] = s.split('-');
-                        return `${String.fromCharCode(65 + parseInt(r))}${parseInt(c) + 1}`;
-                      }).join(', ')}</span>
+                      <span className="seat-numbers">
+                        {(typeof booking.selected_seats === 'string' 
+                          ? (() => { try { return JSON.parse(booking.selected_seats); } catch { return []; } })()
+                          : booking.selected_seats).map(s => {
+                            const parts = s.split('-');
+                            if (parts.length < 2) return s;
+                            const [r, c] = parts;
+                            return `${String.fromCharCode(65 + parseInt(r))}${parseInt(c) + 1}`;
+                          }).join(', ')}
+                      </span>
                     </div>
                   )}
                   <div className="info-row">
