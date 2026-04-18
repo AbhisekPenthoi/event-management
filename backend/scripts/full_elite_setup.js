@@ -69,11 +69,28 @@ async function fullEliteSetup() {
             )
         `);
 
-        // 3. Injecting Professional Events (The "Elite" content)
-        console.log('🌟 Injecting Professional Event Data (with Seating)...');
+        // 3. Injecting Professional Events & Coupons
+        console.log('🌟 Injecting Professional Elite Data...');
         
-        // Clear old sample events to avoid duplicates/confusion if preferred, 
-        // but here we just ensure at least one Elite event exists.
+        // Seed Coupons
+        const couponsData = [
+            ['WELCOME10', 10, 'percentage', 0, 100],
+            ['FLAT500', 500, 'flat', 2000, 50],
+            ['MEGA25', 25, 'percentage', 5000, 20]
+        ];
+
+        for (const [code, val, type, min, max] of couponsData) {
+            const [exists] = await connection.query('SELECT id FROM coupons WHERE code = ?', [code]);
+            if (exists.length === 0) {
+                await connection.query(`
+                    INSERT INTO coupons (code, discount_value, discount_type, min_purchase_amount, valid_until, max_uses)
+                    VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 90 DAY), ?)
+                `, [code, val, type, min, max]);
+                console.log(`✅ Seeded Coupon: ${code}`);
+            }
+        }
+
+        // Seed Elite Event
         const [existing] = await connection.query('SELECT * FROM events WHERE title = "Corporate Leadership Retreat"');
         if (existing.length === 0) {
             const seatingConfig = JSON.stringify({
