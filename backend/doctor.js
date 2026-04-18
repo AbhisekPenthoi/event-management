@@ -54,8 +54,10 @@ async function runDoctor() {
     // Check specific Elite columns
     const columnChecks = [
         { table: 'bookings', col: 'payment_method' },
+        { table: 'bookings', col: 'selected_seats' },
         { table: 'coupons', col: 'discount_type' },
-        { table: 'coupons', col: 'min_purchase_amount' }
+        { table: 'events', col: 'has_seating' },
+        { table: 'events', col: 'seating_config' }
     ];
 
     for (const check of columnChecks) {
@@ -63,7 +65,8 @@ async function runDoctor() {
             await connection.query(`SELECT ${check.col} FROM ${check.table} LIMIT 1`);
             console.log(`✅ Column '${check.table}.${check.col}' exists`);
         } catch (e) {
-            console.error(`❌ ERROR: Column '${check.table}.${check.col}' is MISSING! (Elite feature disabled)`);
+            console.error(`❌ ERROR: Column '${check.table}.${check.col}' is MISSING!`);
+            console.log(`   Action: You MUST run "node scripts/full_elite_setup.js" to fix this.`);
             issueCount++;
         }
     }
