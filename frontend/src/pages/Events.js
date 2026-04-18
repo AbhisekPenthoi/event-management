@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import './Events.css';
 
 const Events = () => {
@@ -8,6 +11,8 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'calendar'
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   useEffect(() => {
     fetchEvents();
@@ -15,18 +20,41 @@ const Events = () => {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get('/api/events');
+      const response = await axios.get('/api/events', { timeout: 5000 });
       setEvents(response.data);
     } catch (error) {
       console.error('Error fetching events:', error);
+      toast.error('Error loading events. Please check your connection.');
+      setEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const getEventsForDate = (date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.event_date);
+      return eventDate.toDateString() === date.toDateString();
+    });
+  };
+
+  const tileContent = ({ date, view }) => {
+    if (view === 'month') {
+      const dayEvents = getEventsForDate(date);
+      if (dayEvents.length > 0) {
+        return (
+          <div className="calendar-tile-content">
+            <div className="event-dot"></div>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
+
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
+      event.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || event.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -41,29 +69,76 @@ const Events = () => {
     <div className="events-page">
       <div className="container">
         <h1>All Events</h1>
-        
+
         <div className="filters">
-          <input
-            type="text"
-            placeholder="Search events..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="category-filter"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </option>
-            ))}
-          </select>
+          <div className="filter-controls">
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="category-filter"
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="view-toggle">
+            <button
+              className={viewMode === 'grid' ? 'active' : ''}
+              onClick={() => setViewMode('grid')}
+            >
+              📱 Grid
+            </button>
+            <button
+              className={viewMode === 'calendar' ? 'active' : ''}
+              onClick={() => setViewMode('calendar')}
+            >
+              📅 Calendar
+            </button>
+          </div>
         </div>
 
-        {filteredEvents.length === 0 ? (
+        {viewMode === 'calendar' ? (
+          <div className="calendar-view-container">
+            <div className="calendar-sidebar">
+              <h3>Events on {selectedDate.toLocaleDateString()}</h3>
+              <div className="selected-date-events">
+                {getEventsForDate(selectedDate).length === 0 ? (
+                  <p className="no-events-day">No events scheduled for this day.</p>
+                ) : (
+                  getEventsForDate(selectedDate).map(event => (
+                    <Link to={`/events/${event.id}`} key={event.id} className="sidebar-event-card">
+                      <div className="sidebar-event-time">
+                        {new Date(event.event_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                      <div className="sidebar-event-details">
+                        <h4>{event.title}</h4>
+                        <span className="sidebar-category">{event.category}</span>
+                      </div>
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="calendar-main">
+              <Calendar
+                onChange={setSelectedDate}
+                value={selectedDate}
+                tileContent={tileContent}
+                className="custom-calendar"
+              />
+            </div>
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <p className="no-events">No events found.</p>
         ) : (
           <div className="events-grid">

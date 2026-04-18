@@ -27,7 +27,7 @@ const UserManagement = () => {
 
   const handleRoleChange = async (userId, newRole) => {
     setEditingRole(userId);
-    
+
     try {
       await axios.put(`/api/users/${userId}/role`, { role: newRole });
       toast.success('User role updated successfully');
@@ -58,7 +58,7 @@ const UserManagement = () => {
   };
 
   const getRoleBadgeClass = (role) => {
-    switch(role) {
+    switch (role) {
       case 'admin': return 'role-admin';
       case 'organizer': return 'role-organizer';
       default: return 'role-user';
@@ -118,6 +118,13 @@ const UserManagement = () => {
                               <option value="organizer">organizer</option>
                               <option value="admin">admin</option>
                             </select>
+                            <button
+                              onClick={() => setEditingRole(null)}
+                              className="btn-cancel-edit"
+                              style={{ marginLeft: '5px', background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                              ❌
+                            </button>
                           </div>
                         ) : (
                           <button

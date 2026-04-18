@@ -16,14 +16,14 @@ const Login = () => {
     setLoading(true);
 
     const result = await login(email, password);
-    
+
     if (result.success) {
       toast.success('Login successful!');
       navigate('/events');
     } else {
       toast.error(result.error);
     }
-    
+
     setLoading(false);
   };
 
@@ -33,11 +33,12 @@ const Login = () => {
         <h2>Login to EventHub</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label>Email or Username</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin or admin@events.com"
               required
             />
           </div>

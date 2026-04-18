@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 import './ImageUpload.css';
 
 const ImageUpload = ({ onImageChange, existingUrl = '' }) => {
@@ -11,13 +12,13 @@ const ImageUpload = ({ onImageChange, existingUrl = '' }) => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toast.error('Please select an image file');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      toast.error('Image size should be less than 5MB');
       return;
     }
 
@@ -33,13 +34,13 @@ const ImageUpload = ({ onImageChange, existingUrl = '' }) => {
         setIsUploading(false);
       };
       reader.onerror = () => {
-        alert('Error reading file');
+        toast.error('Error reading file');
         setIsUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Error uploading image:', error);
-      alert('Error uploading image');
+      toast.error('Error uploading image');
       setIsUploading(false);
     }
   };
@@ -55,8 +56,8 @@ const ImageUpload = ({ onImageChange, existingUrl = '' }) => {
         {imagePreview ? (
           <div className="image-preview">
             <img src={imagePreview} alt="Preview" />
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="remove-btn"
               onClick={handleRemoveImage}
             >

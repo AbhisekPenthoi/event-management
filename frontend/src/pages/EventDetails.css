@@ -110,6 +110,25 @@
   text-align: center;
 }
 
+.price-breakdown {
+  margin-bottom: 0.8rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px dashed #b3d7ff;
+}
+
+.breakdown-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.breakdown-details span {
+  display: block;
+  text-align: center;
+}
+
 .booking-note {
   text-align: center;
   color: #d32f2f;
@@ -117,18 +136,143 @@
   font-weight: 500;
 }
 
+.waitlist-container {
+  text-align: center;
+  padding: 1rem;
+  background: #fff8e1;
+  border-radius: 10px;
+  border: 1px solid #ffe082;
+}
+
+.full-badge {
+  display: inline-block;
+  background: #f44336;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 5px;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.waitlist-note {
+  color: #5d4037;
+  margin-bottom: 1.5rem;
+}
+
+.availability-note {
+  display: block;
+  margin-top: 0.5rem;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+/* Elite Banner Decorators */
+.event-detail-image {
+  position: relative;
+}
+
+.banner-overlay-elite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
+  pointer-events: none;
+}
+
+.cyber-grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(rgba(0, 242, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 242, 255, 0.1) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 30px;
+  }
+}
+
+.music-glow-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(255, 71, 87, 0.2) 100%);
+  mix-blend-mode: color-dodge;
+  animation: glowPulse 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes glowPulse {
+  from {
+    opacity: 0.4;
+  }
+
+  to {
+    opacity: 0.8;
+  }
+}
+
+.theme-technology .event-detail-card {
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 30px rgba(0, 242, 255, 0.2);
+}
+
+.theme-music .event-detail-card {
+  border: 1px solid var(--primary);
+  box-shadow: 0 0 30px rgba(255, 71, 87, 0.2);
+}
+
 @media (max-width: 768px) {
+
   .event-main,
   .booking-section {
     padding: 2rem;
   }
-  
+
   .event-main h1 {
     font-size: 2rem;
   }
-  
+
   .event-info {
     grid-template-columns: 1fr;
   }
+
+  .event-extra-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
+/* Elite Live Interaction Layout */
+.event-extra-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 3rem auto;
+}
+
+.extra-main {
+  min-width: 0;
+  /* Prevents flex/grid overflow */
+}
+
+.extra-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}

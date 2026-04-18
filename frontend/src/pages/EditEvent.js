@@ -19,7 +19,15 @@ const EditEvent = () => {
     price: '',
     capacity: '',
     image_url: '',
-    organizer_name: ''
+    organizer_name: '',
+    expenses: '',
+    has_seating: false,
+    seating_config: {
+      rows: 10,
+      cols: 10,
+      vip_rows: '',
+      vip_price_multiplier: 1.5
+    }
   });
 
   const categories = ['Technology', 'Entertainment', 'Education', 'Sports', 'Business', 'Arts', 'Other'];
@@ -31,13 +39,24 @@ const EditEvent = () => {
       setFormData({
         title: event.title,
         description: event.description,
-        eventDate: event.event_date.replace('T', ' ').substring(0, 16),
+        eventDate: event.event_date.substring(0, 16),
         location: event.location,
         category: event.category,
         price: event.price,
         capacity: event.capacity,
         image_url: event.image_url || '',
-        organizer_name: event.organizer_name || ''
+        organizer_name: event.organizer_name || '',
+        expenses: event.expenses || '',
+        has_seating: event.has_seating || false,
+        seating_config: event.has_seating ? {
+          ...event.seating_config,
+          vip_rows: Array.isArray(event.seating_config.vip_rows) ? event.seating_config.vip_rows.join(', ') : ''
+        } : {
+          rows: 10,
+          cols: 10,
+          vip_rows: '',
+          vip_price_multiplier: 1.5
+        }
       });
     } catch (error) {
       toast.error('Error loading event details');
@@ -69,7 +88,14 @@ const EditEvent = () => {
     setLoading(true);
 
     try {
-      await axios.put(`/api/events/${id}`, formData);
+      const dataToSubmit = {
+        ...formData,
+        seating_config: formData.has_seating ? {
+          ...formData.seating_config,
+          vip_rows: formData.seating_config.vip_rows.toString().split(',').map(r => parseInt(r.trim())).filter(r => !isNaN(r))
+        } : null
+      };
+      await axios.put(`/api/events/${id}`, dataToSubmit);
       toast.success('Event updated successfully!');
       navigate('/my-events');
     } catch (error) {
@@ -142,7 +168,7 @@ const EditEvent = () => {
                   🔗 Image URL
                 </button>
               </div>
-              
+
               {imageTab === 'upload' ? (
                 <ImageUpload onImageChange={handleImageUpload} existingUrl={formData.image_url} />
               ) : (
@@ -154,7 +180,7 @@ const EditEvent = () => {
                     onChange={handleChange}
                     placeholder="https://example.com/image.jpg"
                   />
-                  <small style={{color: '#666', fontSize: '0.9rem'}}>
+                  <small style={{ color: '#666', fontSize: '0.9rem' }}>
                     Leave empty to use default category image
                   </small>
                 </>
@@ -211,16 +237,104 @@ const EditEvent = () => {
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Organizer Name *</label>
-              <input
-                type="text"
-                name="organizer_name"
-                value={formData.organizer_name}
-                onChange={handleChange}
-                placeholder="e.g., John Doe, Tech Corp, etc."
-                required
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Organizer Name *</label>
+                <input
+                  type="text"
+                  name="organizer_name"
+                  value={formData.organizer_name}
+                  onChange={handleChange}
+                  placeholder="e.g., John Doe, Tech Corp, etc."
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Total Expenses (₹)</label>
+                <input
+                  type="number"
+                  name="expenses"
+                  value={formData.expenses}
+                  onChange={handleChange}
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+            </div>
+
+            <div className="seating-config-section">
+              <div className="form-group checkbox-group">
+                <input
+                  type="checkbox"
+                  id="has_seating"
+                  name="has_seating"
+                  checked={formData.has_seating}
+                  onChange={(e) => setFormData({ ...formData, has_seating: e.target.checked })}
+                />
+                <label htmlFor="has_seating">Enable Venue Seating Map</label>
+              </div>
+
+              {formData.has_seating && (
+                <div className="seating-details card-inner">
+                  <h4>Venue Configuration</h4>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Rows (1-26)</label>
+                      <input
+                        type="number"
+                        value={formData.seating_config.rows}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seating_config: { ...formData.seating_config, rows: parseInt(e.target.value) || 1 }
+                        })}
+                        min="1"
+                        max="26"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Columns (1-30)</label>
+                      <input
+                        type="number"
+                        value={formData.seating_config.cols}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seating_config: { ...formData.seating_config, cols: parseInt(e.target.value) || 1 }
+                        })}
+                        min="1"
+                        max="30"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>VIP Rows (comma separated, e.g., 0,1)</label>
+                      <input
+                        type="text"
+                        value={formData.seating_config.vip_rows}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seating_config: { ...formData.seating_config, vip_rows: e.target.value }
+                        })}
+                        placeholder="0, 1"
+                      />
+                      <small>Rows are A=0, B=1, etc.</small>
+                    </div>
+                    <div className="form-group">
+                      <label>VIP Price Multiplier</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={formData.seating_config.vip_price_multiplier}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          seating_config: { ...formData.seating_config, vip_price_multiplier: parseFloat(e.target.value) || 1.0 }
+                        })}
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="form-actions">
@@ -239,4 +353,3 @@ const EditEvent = () => {
 };
 
 export default EditEvent;
-

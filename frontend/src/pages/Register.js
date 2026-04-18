@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-toastify';
-import { useContext } from 'react';
 import './Auth.css';
 
 const Register = () => {
@@ -33,14 +32,14 @@ const Register = () => {
       formData.password,
       formData.fullName
     );
-    
+
     if (result.success) {
       toast.success('Registration successful! Please login.');
       navigate('/login');
     } else {
       toast.error(result.error);
     }
-    
+
     setLoading(false);
   };
 

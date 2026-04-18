@@ -20,6 +20,8 @@ import EventBookings from './pages/EventBookings';
 import UserManagement from './pages/UserManagement';
 import Analytics from './pages/Analytics';
 import Ticket from './pages/Ticket';
+import Checkout from './pages/Checkout';
+import Certificate from './pages/Certificate';
 
 // Private Route Component
 const PrivateRoute = ({ children }) => {
@@ -51,77 +53,93 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetails />} />
-            <Route 
-              path="/bookings" 
+            <Route
+              path="/bookings"
               element={
                 <PrivateRoute>
                   <Bookings />
                 </PrivateRoute>
-              } 
+              }
             />
-            <Route 
-              path="/profile" 
+            <Route
+              path="/profile"
               element={
                 <PrivateRoute>
                   <Profile />
                 </PrivateRoute>
-              } 
+              }
             />
-            <Route 
-              path="/create-event" 
+            <Route
+              path="/create-event"
               element={
                 <PrivateRoute>
                   <CreateEvent />
                 </PrivateRoute>
-              } 
+              }
             />
-            <Route 
-              path="/my-events" 
+            <Route
+              path="/my-events"
               element={
                 <PrivateRoute>
                   <MyEvents />
                 </PrivateRoute>
-              } 
+              }
             />
-            <Route 
-              path="/edit-event/:id" 
+            <Route
+              path="/edit-event/:id"
               element={
                 <PrivateRoute>
                   <EditEvent />
                 </PrivateRoute>
-              } 
+              }
             />
-            <Route 
-              path="/event-bookings/:eventId" 
+            <Route
+              path="/event-bookings/:eventId"
               element={
                 <PrivateRoute>
                   <EventBookings />
                 </PrivateRoute>
-              } 
+              }
             />
-            <Route 
-              path="/user-management" 
+            <Route
+              path="/user-management"
               element={
                 <AdminRoute>
                   <UserManagement />
                 </AdminRoute>
-              } 
+              }
             />
-            <Route 
-              path="/analytics" 
+            <Route
+              path="/analytics"
               element={
                 <AdminRoute>
                   <Analytics />
                 </AdminRoute>
-              } 
+              }
             />
-            <Route 
-              path="/ticket/:bookingId" 
+            <Route
+              path="/ticket/:bookingId"
               element={
                 <PrivateRoute>
                   <Ticket />
                 </PrivateRoute>
-              } 
+              }
+            />
+            <Route
+              path="/checkout/:bookingId"
+              element={
+                <PrivateRoute>
+                  <Checkout />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/certificate/:bookingId"
+              element={
+                <PrivateRoute>
+                  <Certificate />
+                </PrivateRoute>
+              }
             />
           </Routes>
         </main>

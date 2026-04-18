@@ -1,69 +1,83 @@
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  height: 70px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: var(--transition);
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 100%;
 }
 
 .nav-logo h2 {
-  color: white;
-  margin: 0;
   font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary) 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
 }
 
 .nav-menu {
   display: flex;
-  list-style: none;
-  gap: 2rem;
   align-items: center;
-  margin: 0;
-  padding: 0;
+  list-style: none;
+  gap: 1.5rem;
 }
 
 .nav-link {
-  color: white;
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
-  transition: opacity 0.3s;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
 }
 
 .nav-link:hover {
-  opacity: 0.8;
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.05);
 }
 
 .nav-register {
-  background: white;
-  color: #667eea;
-  padding: 0.5rem 1.5rem;
+  background: var(--primary);
+  color: white !important;
+  padding: 0.6rem 1.25rem;
   border-radius: 25px;
   font-weight: 600;
 }
 
 .nav-register:hover {
-  opacity: 0.9;
+  background: var(--primary-hover);
+  transform: translateY(-1px);
 }
 
 .nav-logout {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 600;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.3s;
+  font-weight: 500;
+  color: var(--accent);
+  transition: var(--transition);
 }
 
 .nav-logout:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #fff1f2;
+  border-color: #fecdd3;
 }
 
 @media (max-width: 768px) {
@@ -71,9 +85,8 @@
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .nav-menu {
     gap: 1rem;
   }
 }
-

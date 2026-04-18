@@ -44,14 +44,15 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const identifier = email; // Frontend sends it as 'email' state
 
     // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Username/Email and password are required' });
     }
 
-    // Find user
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    // Find user by email or username
+    const [users] = await db.query('SELECT * FROM users WHERE email = ? OR username = ?', [identifier, identifier]);
 
     if (users.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -68,10 +69,10 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        role: user.role 
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role
       },
       process.env.JWT_SECRET || 'your_super_secret_jwt_key',
       { expiresIn: '24h' }

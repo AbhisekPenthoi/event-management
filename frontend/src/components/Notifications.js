@@ -15,12 +15,12 @@ const Notifications = () => {
     if (user) {
       fetchNotifications();
       fetchUnreadCount();
-      
+
       // Poll for new notifications every 30 seconds
       const interval = setInterval(() => {
         fetchUnreadCount();
       }, 30000);
-      
+
       return () => clearInterval(interval);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -28,7 +28,7 @@ const Notifications = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get('/api/notifications');
+      const response = await axios.get('/api/notifications', { timeout: 3000 });
       setNotifications(response.data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -37,7 +37,7 @@ const Notifications = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await axios.get('/api/notifications/unread-count');
+      const response = await axios.get('/api/notifications/unread-count', { timeout: 3000 });
       setUnreadCount(response.data.count);
     } catch (error) {
       console.error('Error fetching unread count:', error);
@@ -47,7 +47,7 @@ const Notifications = () => {
   const markAsRead = async (notificationId) => {
     try {
       await axios.put(`/api/notifications/${notificationId}/read`);
-      setNotifications(notifications.map(n => 
+      setNotifications(notifications.map(n =>
         n.id === notificationId ? { ...n, is_read: true } : n
       ));
       setUnreadCount(Math.max(0, unreadCount - 1));
@@ -85,8 +85,8 @@ const Notifications = () => {
 
   return (
     <div className="notifications-container">
-      <div 
-        className="notification-bell" 
+      <div
+        className="notification-bell"
         onClick={() => {
           setShowDropdown(!showDropdown);
           if (!showDropdown) fetchNotifications();
@@ -106,14 +106,14 @@ const Notifications = () => {
               </button>
             )}
           </div>
-          
+
           <div className="notifications-list">
             {notifications.length === 0 ? (
               <div className="no-notifications">No notifications</div>
             ) : (
               notifications.map(notification => (
-                <div 
-                  key={notification.id} 
+                <div
+                  key={notification.id}
                   className={`notification-item ${!notification.is_read ? 'unread' : ''}`}
                   onClick={() => !notification.is_read && markAsRead(notification.id)}
                 >
@@ -123,7 +123,7 @@ const Notifications = () => {
                       {new Date(notification.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  <button 
+                  <button
                     className="delete-notification"
                     onClick={(e) => {
                       e.stopPropagation();
