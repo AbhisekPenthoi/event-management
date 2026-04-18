@@ -34,12 +34,28 @@ async function fullEliteSetup() {
             ADD COLUMN IF NOT EXISTS qr_token VARCHAR(255) DEFAULT NULL
         `).catch(() => {});
 
-        // Coupons table
+        // Coupons table - Create from scratch if missing
+        await connection.query(`
+            CREATE TABLE IF NOT EXISTS coupons (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                discount_value INT NOT NULL,
+                discount_type ENUM('percentage', 'flat') DEFAULT 'percentage',
+                min_purchase_amount DECIMAL(10, 2) DEFAULT 0.00,
+                max_uses INT DEFAULT 100,
+                current_uses INT DEFAULT 0,
+                is_active BOOLEAN DEFAULT TRUE,
+                valid_until DATETIME NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('   - Coupons table verified/created.');
+
+        // Update Coupons table columns (compatibility check for older existing tables)
         await connection.query(`
             ALTER TABLE coupons 
             ADD COLUMN IF NOT EXISTS discount_type ENUM('percentage', 'flat') DEFAULT 'percentage',
-            ADD COLUMN IF NOT EXISTS min_purchase_amount DECIMAL(10, 2) DEFAULT 0.00,
-            CHANGE COLUMN IF NOT EXISTS discount_percent discount_value INT NOT NULL
+            ADD COLUMN IF NOT EXISTS min_purchase_amount DECIMAL(10, 2) DEFAULT 0.00
         `).catch(() => {});
 
         // 2. New Elite Tables
